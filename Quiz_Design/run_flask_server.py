@@ -8,15 +8,14 @@ ANNOT_FILE = "qd_annotations_running.jsonl"
 CONTENT_FILE = "qd_content.json"
 
 def load_question_cache():
-    if os.path.exists(CACHE_FILE):
-        with open(CACHE_FILE, "r") as f:
-            return json.load(f)
-    else:
+    if not os.path.exists(CACHE_FILE):
         return {}
+    with open(CACHE_FILE, "r") as f:
+        return json.load(f)
 
 def mark_paragraph_answer(paragraph, answer, model_card=""):
     if "prophetnet" in model_card:
-        return "%s [SEP] %s" % (answer, paragraph)
+        return f"{answer} [SEP] {paragraph}"
     elif "mixqg" in model_card:
         return f"{answer} \\n {paragraph}"
     else:
@@ -103,16 +102,12 @@ def api_load_document():
 def api_gen_questions():
     request_data = dict(request.form)
 
-    doc_id = int(request_data["doc_id"])
     context = request_data["context"]
     answer_span = request_data["selection"]
 
     paragraphs = context.split("<br />")
-    relevant_paragraphs = [p for p in paragraphs if answer_span in p]
-    if len(relevant_paragraphs) == 0:
-        return []
-    else:
-        question_key = "%d||%s" % (doc_id, answer_span)
+    if relevant_paragraphs := [p for p in paragraphs if answer_span in p]:
+        question_key = "%d||%s" % (int(request_data["doc_id"]), answer_span)
         if question_key not in cached_questions:
             relevant_paragraph = relevant_paragraphs[0]
             response = []
@@ -134,6 +129,8 @@ def api_gen_questions():
 
         random.shuffle(response)
         return {"response": response}
+    else:
+        return []
 
 @app.route("/api/annotate_questions", methods=["POST"])
 def api_annotate_questions():

@@ -70,7 +70,7 @@ def preprocess_mctest(examples):
     context = examples['story']
     question = examples['question']
     answer = []
-    for i in range(len(examples['question'])):
+    for i in range(len(question)):
         answer_letter = examples['answer'][i]
         options = examples['answer_options'][i]
         correct_answer = options[answer_letter]
@@ -86,10 +86,10 @@ def preprocess_mctest(examples):
 def preprocess_drop(examples):
     question = examples["question"]
     context = examples["passage"]
-    answer = []
-    for i in range(len(examples["answers_spans"])):
-        answer.append(examples["answers_spans"][i]["spans"][0])
-
+    answer = [
+        examples["answers_spans"][i]["spans"][0]
+        for i in range(len(examples["answers_spans"]))
+    ]
     return {
         "context": context,
         "question": question,
@@ -104,8 +104,7 @@ def preprocess_boolq(examples):
     for i in range(len(examples['question'])):
         ans = 'yes' if examples['answer'][i] else 'no'
         doc = nlp(examples['question'][i])
-        entities = " ".join([ent.text for ent in doc.ents])
-        if len(entities) > 0:
+        if entities := " ".join([ent.text for ent in doc.ents]):
             answer.append(f"{ans} {entities}")
         else:
             answer.append(ans)

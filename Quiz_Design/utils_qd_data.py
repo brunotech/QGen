@@ -4,22 +4,18 @@ import json, os
 def load_qd_annotations():
     annotations = []
     with open("quiz_design_data.jsonl", "r") as f:
-        for line in f:
-            annotations.append(json.loads(line))
-
+        annotations.extend(json.loads(line) for line in f)
     for d in annotations:
         d["timestamp"] = datetime.strptime(d["timestamp"], "%Y-%m-%d %H:%M:%S")
         d["doc_id"] = int(d["doc_id"])
-        
+
     # Only keep the last annotation (as we store each step purposefully for timing)
     annotations = sorted(annotations, key=lambda a: a["timestamp"])
-    M = {}
-    for d in annotations:
-        k = "%d||%s||%s" % (d["user_id"], d["doc_id"], d["answer_span"])
-        M[k] = d
-        
-    unique_annotations = sorted(M.values(), key=lambda a: a["timestamp"])
-    return unique_annotations
+    M = {
+        "%d||%s||%s" % (d["user_id"], d["doc_id"], d["answer_span"]): d
+        for d in annotations
+    }
+    return sorted(M.values(), key=lambda a: a["timestamp"])
 
 def build_qd_groups(annotations):
     with open("qd_content.json", "r") as f:

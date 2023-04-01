@@ -11,8 +11,7 @@ def select_logprobs(logits, decoded_tokens, eos_id):
         selected_logprob = logprobs[i, torch.arange(len(generated_tokenized)), generated_tokenized]
         summed_logprob = torch.sum(selected_logprob)
         selected_logprobs.append(summed_logprob)
-    selected_logprobs = torch.stack(selected_logprobs, dim=0)
-    return selected_logprobs
+    return torch.stack(selected_logprobs, dim=0)
 
 models_folder = os.environ["MODELS_FOLDER"]
 
@@ -125,8 +124,9 @@ class GeneratorHF:
             logits = model_output["logits"]
 
         N_unwrap = decoder_ids_output.shape[0] * decoder_ids_output.shape[1]
-        loss = crit(logits.view(N_unwrap, -1), decoder_ids_output.contiguous().view(-1)) # self.tokenizer.vocab_size
-        return loss
+        return crit(
+            logits.view(N_unwrap, -1), decoder_ids_output.contiguous().view(-1)
+        )
 
     def score_batch(self, encoded_texts, decoded_texts, max_enc_length=None, max_dec_length=None):
         encoder_ids, decoder_ids_input, decoder_ids_output = self.preprocess(encoded_texts, decoded_texts, max_enc_length, max_dec_length)
